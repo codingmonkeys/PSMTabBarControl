@@ -462,7 +462,7 @@ static NSMutableDictionary *registeredStyleClasses;
 	return delegate;
 }
 
-- (void)setDelegate:(id)object {
+- (void)setDelegate:(id <PSMTabBarControlDelegate>)object {
 	delegate = object;
 
 	NSMutableArray *types = [NSMutableArray arrayWithObject:@"PSMTabBarControlItemPBType"];

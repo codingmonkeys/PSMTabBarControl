@@ -64,7 +64,7 @@ typedef enum PSMTabStateMask : NSUInteger {
 
 @protocol PSMTabBarControlDelegate;
 
-@interface PSMTabBarControl : NSControl {
+@interface PSMTabBarControl : NSControl <NSTabViewDelegate> {
 												
 	// control basics
 	NSMutableArray							*_cells;								// the cells that draw the tabs
