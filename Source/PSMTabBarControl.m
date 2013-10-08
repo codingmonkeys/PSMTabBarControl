@@ -1807,7 +1807,8 @@ static NSMutableDictionary *registeredStyleClasses;
 		return;
 	}
 
-	[sender retain];
+	[[sender retain] autorelease];
+    [[[sender representedObject] retain] autorelease];
 
     if (([self delegate]) && ([[self delegate] respondsToSelector:@selector(tabView:shouldCloseTabViewItem:)])) {
         if (![[self delegate] tabView:tabView shouldCloseTabViewItem:[sender representedObject]]) {
@@ -1821,15 +1822,11 @@ static NSMutableDictionary *registeredStyleClasses;
          [[self delegate] tabView:tabView willCloseTabViewItem:[sender representedObject]];
     }
      
-    [[sender representedObject] retain];
     [tabView removeTabViewItem:[sender representedObject]];
      
     if (([self delegate]) && ([[self delegate] respondsToSelector:@selector(tabView:didCloseTabViewItem:)])) {
          [[self delegate] tabView:tabView didCloseTabViewItem:[sender representedObject]];
     }
-    [[sender representedObject] release];
-
-	[sender release];
 }
 
 - (void)tabClick:(id)sender {

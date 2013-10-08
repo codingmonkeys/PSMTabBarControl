@@ -396,7 +396,8 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
                             // cells still do not fit in available width? -> remove last cell
                             if (availableWidth < usedWidth) {
                                 totalOccupiedWidth -= [[newWidths lastObject] intValue];
-                                numberOfVisibleCells--;
+#pragma unused(totalOccupiedWidth)
+                               numberOfVisibleCells--;
                                 [newWidths removeLastObject];
 
                                 revisedWidth = availableWidth / numberOfVisibleCells;
