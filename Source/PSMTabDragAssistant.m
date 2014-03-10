@@ -377,6 +377,15 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 			[tabView selectTabViewItem:item];
 		}
 		[tabView setDelegate:tempDelegate];
+
+		// make sure window of tab view is visible again.
+		[tabView.window setAlphaValue:1.0];
+		if(_currentTearOffStyle == PSMTabBarTearOffAlphaWindow) {
+			[[tabView window] makeKeyAndOrderFront:nil];
+		} else {
+			//center the window over where we ended dragging
+			[self _expandWindow:[tabView window] atPoint:[NSEvent mouseLocation]];
+		}
 	}
 
 	if(([[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex) && [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {

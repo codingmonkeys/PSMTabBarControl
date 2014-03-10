@@ -1688,100 +1688,116 @@ static NSMutableDictionary *registeredStyleClasses;
 
 // NSDraggingDestination
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
-	if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
-		if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-		   ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
-			return NSDragOperationNone;
+	if (self.window.alphaValue > 0.0) {
+		if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+			if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+			   ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
+				return NSDragOperationNone;
+			}
+
+			[[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBarControl:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+			return NSDragOperationMove;
 		}
-
-		[[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBarControl:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
-		return NSDragOperationMove;
 	}
-
 	return NSDragOperationNone;
 }
 
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
-	PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil];
+	if (self.window.alphaValue > 0.0) {
+		PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil];
 
-	if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
-		if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-		   ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
-			return NSDragOperationNone;
+		if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+			if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+			   ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
+				return NSDragOperationNone;
+			}
+
+			[[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBarControl:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+			return NSDragOperationMove;
+		} else if(cell) {
+			//something that was accepted by the delegate was dragged on
+
+			//Test for the space bar (the skip-the-delay key).
+			/*enum { virtualKeycodeForSpace = 49 }; //Source: IM:Tx (Fig. C-2)
+			 union {
+			 KeyMap keymap;
+			 char bits[16];
+			 } keymap;
+			 GetKeys(keymap.keymap);
+			 if ((GetCurrentEventKeyModifiers() == 0) && bit_test(keymap.bits, virtualKeycodeForSpace)) {
+			 //The user pressed the space bar. This skips the delay; the user wants to pop the spring on this tab *now*.
+
+			 //For some reason, it crashes if I call -fire here. I don't know why. It doesn't crash if I simply set the fire date to now.
+			 [_springTimer setFireDate:[NSDate date]];
+			 } else {*/
+			//Wind the spring for a spring-loaded drop.
+			//The delay time comes from Finder's defaults, which specifies it in milliseconds.
+			//If the delegate can't handle our spring-loaded drop, we'll abort it when the timer fires. See fireSpring:. This is simpler than constantly (checking for spring-loaded awareness and tearing down/rebuilding the timer) at every delegate change.
+
+			//If the user has dragged to a different tab, reset the timer.
+			if(_tabViewItemWithSpring != [cell representedObject]) {
+				[_springTimer invalidate];
+				[_springTimer release]; _springTimer = nil;
+				_tabViewItemWithSpring = [cell representedObject];
+			}
+			if(!_springTimer) {
+				//Finder's default delay time, as of Tiger, is 668 ms. If the user has never changed it, there's no setting in its defaults, so we default to that amount.
+				NSNumber *delayNumber = NSMakeCollectable([(NSNumber *)CFPreferencesCopyAppValue((CFStringRef)@"SpringingDelayMilliseconds", (CFStringRef)@"com.apple.finder") autorelease]);
+				NSTimeInterval delaySeconds = delayNumber ?[delayNumber doubleValue] / 1000.0 : 0.668;
+				_springTimer = [[NSTimer scheduledTimerWithTimeInterval:delaySeconds
+																 target:self
+															   selector:@selector(fireSpring:)
+															   userInfo:sender
+																repeats:NO] retain];
+			}
+			return NSDragOperationCopy;
 		}
-
-		[[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBarControl:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
-		return NSDragOperationMove;
-	} else if(cell) {
-		//something that was accepted by the delegate was dragged on
-
-		//Test for the space bar (the skip-the-delay key).
-		/*enum { virtualKeycodeForSpace = 49 }; //Source: IM:Tx (Fig. C-2)
-		   union {
-		        KeyMap keymap;
-		        char bits[16];
-		   } keymap;
-		   GetKeys(keymap.keymap);
-		   if ((GetCurrentEventKeyModifiers() == 0) && bit_test(keymap.bits, virtualKeycodeForSpace)) {
-		        //The user pressed the space bar. This skips the delay; the user wants to pop the spring on this tab *now*.
-
-		        //For some reason, it crashes if I call -fire here. I don't know why. It doesn't crash if I simply set the fire date to now.
-		        [_springTimer setFireDate:[NSDate date]];
-		   } else {*/
-		//Wind the spring for a spring-loaded drop.
-		//The delay time comes from Finder's defaults, which specifies it in milliseconds.
-		//If the delegate can't handle our spring-loaded drop, we'll abort it when the timer fires. See fireSpring:. This is simpler than constantly (checking for spring-loaded awareness and tearing down/rebuilding the timer) at every delegate change.
-
-		//If the user has dragged to a different tab, reset the timer.
-		if(_tabViewItemWithSpring != [cell representedObject]) {
-			[_springTimer invalidate];
-			[_springTimer release]; _springTimer = nil;
-			_tabViewItemWithSpring = [cell representedObject];
-		}
-		if(!_springTimer) {
-			//Finder's default delay time, as of Tiger, is 668 ms. If the user has never changed it, there's no setting in its defaults, so we default to that amount.
-			NSNumber *delayNumber = NSMakeCollectable([(NSNumber *)CFPreferencesCopyAppValue((CFStringRef)@"SpringingDelayMilliseconds", (CFStringRef)@"com.apple.finder") autorelease]);
-			NSTimeInterval delaySeconds = delayNumber ?[delayNumber doubleValue] / 1000.0 : 0.668;
-			_springTimer = [[NSTimer scheduledTimerWithTimeInterval:delaySeconds
-							 target:self
-							 selector:@selector(fireSpring:)
-							 userInfo:sender
-							 repeats:NO] retain];
-		}
-		return NSDragOperationCopy;
 	}
 
 	return NSDragOperationNone;
 }
 
 - (void)draggingExited:(id <NSDraggingInfo>)sender {
-	[_springTimer invalidate];
-	[_springTimer release]; _springTimer = nil;
+	if (self.window.alphaValue > 0.0) {
+		[_springTimer invalidate];
+		[_springTimer release]; _springTimer = nil;
 
-	[[PSMTabDragAssistant sharedDragAssistant] draggingExitedTabBarControl:self];
+		[[PSMTabDragAssistant sharedDragAssistant] draggingExitedTabBarControl:self];
+	}
 }
 
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
-	//validate the drag operation only if there's a valid tab bar to drop into
-	return [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound ||
-		   [[PSMTabDragAssistant sharedDragAssistant] destinationTabBar] != nil;
+	if (self.window.alphaValue > 0.0) {
+		//validate the drag operation only if there's a valid tab bar to drop into
+		return [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound ||
+		[[PSMTabDragAssistant sharedDragAssistant] destinationTabBar] != nil;
+	}
+	return NO;
 }
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
-	if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
-		[[PSMTabDragAssistant sharedDragAssistant] performDragOperation];
-	} else if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:acceptedDraggingInfo:onTabViewItem:)]) {
-		//forward the drop to the delegate
-		[[self delegate] tabView:tabView acceptedDraggingInfo:sender onTabViewItem:[[self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil] representedObject]];
+	if (self.window.alphaValue > 0.0) {
+		if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+			[[PSMTabDragAssistant sharedDragAssistant] performDragOperation];
+		} else if([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:acceptedDraggingInfo:onTabViewItem:)]) {
+			//forward the drop to the delegate
+			[[self delegate] tabView:tabView acceptedDraggingInfo:sender onTabViewItem:[[self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil] representedObject]];
+		}
+		return YES;
 	}
-	return YES;
+	return NO;
+}
+
+- (BOOL)wantsPeriodicDraggingUpdates {
+	return NO;
 }
 
 - (void)draggedImage:(NSImage *)anImage endedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
-	[[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
+ 	[[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
 }
 
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender {
+	self.window.alphaValue = 1.0;
 }
 
 #pragma mark -
