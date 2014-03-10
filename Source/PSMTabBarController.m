@@ -66,7 +66,7 @@
 	NSRect rect;
 
 	if(index > -1 && index < [_cellFrames count]) {
-		rect = [[_cellFrames objectAtIndex:index] rectValue];
+		rect = [[_cellFrames objectAtIndex:(NSUInteger)index] rectValue];
 	} else {
 		NSLog(@"cellFrameAtIndex: Invalid index (%ld)", (long)index);
 		rect = NSZeroRect;
@@ -106,16 +106,17 @@
 	[cell setTabState:PSMTab_SelectedMask];
 
 	if(![cell isInOverflowMenu]) {
-		NSInteger cellIndex = [cells indexOfObject:cell];
+		NSUInteger cellIndex = [cells indexOfObject:cell];
+		if (cellIndex != NSNotFound) {
+			if(cellIndex > 0) {
+				nextCell = [cells objectAtIndex:cellIndex - 1];
+				[nextCell setTabState:[nextCell tabState] | PSMTab_RightIsSelectedMask];
+			}
 
-		if(cellIndex > 0) {
-			nextCell = [cells objectAtIndex:cellIndex - 1];
-			[nextCell setTabState:[nextCell tabState] | PSMTab_RightIsSelectedMask];
-		}
-
-		if(cellIndex < [cells count] - 1) {
-			nextCell = [cells objectAtIndex:cellIndex + 1];
-			[nextCell setTabState:[nextCell tabState] | PSMTab_LeftIsSelectedMask];
+			if(cellIndex < [cells count] - 1) {
+				nextCell = [cells objectAtIndex:cellIndex + 1];
+				[nextCell setTabState:[nextCell tabState] | PSMTab_LeftIsSelectedMask];
+			}
 		}
 	}
 }
@@ -129,7 +130,7 @@
 
 - (void)layoutCells {
 	NSArray *cells = [_control cells];
-	NSInteger cellCount = [cells count];
+	NSUInteger cellCount = [cells count];
 
 	// make sure all of our tabs are accounted for before updating
 	if([[_control tabView] numberOfTabViewItems] != cellCount) {
@@ -152,20 +153,21 @@
  */
 - (NSInteger)_shrinkWidths:(NSMutableArray *)newWidths towardMinimum:(NSInteger)minimum withAvailableWidth:(CGFloat)availableWidth {
 	BOOL changed = NO;
-	NSInteger count = [newWidths count];
+	NSUInteger count = [newWidths count];
 	NSInteger totalWidths = [[newWidths valueForKeyPath:@"@sum.intValue"] integerValue];
 	NSInteger originalTotalWidths = totalWidths;
 
 	do {
 		changed = NO;
 
-		for(NSInteger q = (count - 1); q >= 0; q--) {
-			CGFloat cellWidth = [[newWidths objectAtIndex:q] doubleValue];
+		for(NSUInteger q = count; q > 0; q--) {
+			NSUInteger index = q - 1;
+			CGFloat cellWidth = [[newWidths objectAtIndex:index] doubleValue];
 			if(cellWidth - 1 >= minimum) {
 				cellWidth--;
 				totalWidths--;
 
-				[newWidths replaceObjectAtIndex:q
+				[newWidths replaceObjectAtIndex:index
 				 withObject:[NSNumber numberWithDouble:cellWidth]];
 
 				changed = YES;
@@ -188,9 +190,9 @@
  */
 static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
 	NSInteger runningTotal = 0;
-	NSInteger count = [array count];
+	NSUInteger count = [array count];
 
-	for(NSInteger i = 0; i < count; i++) {
+	for(NSUInteger i = 0; i < count; i++) {
 		NSInteger currentValue = [[array objectAtIndex:i] integerValue];
 		runningTotal += MIN(currentValue, minimum);
 	}
@@ -208,7 +210,7 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
  */
 
 - (NSArray *)_generateWidthsFromCells:(NSArray *)cells {
-	NSInteger cellCount = [cells count], i, numberOfVisibleCells = ([_control orientation] == PSMTabBarHorizontalOrientation) ? 1 : 0;
+	NSUInteger cellCount = [cells count], i, numberOfVisibleCells = ([_control orientation] == PSMTabBarHorizontalOrientation) ? 1 : 0;
 	NSMutableArray *newWidths = [NSMutableArray arrayWithCapacity:cellCount];
 	id <PSMTabStyle> style = [_control style];
 	CGFloat availableWidth = [_control availableCellWidth], currentOrigin = 0, totalOccupiedWidth = 0.0, width;
@@ -248,12 +250,12 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
 
 				//If we're not going to use the overflow menu, cram all the tab cells into the bar regardless of minimum width
 				if(![_control useOverflowMenu]) {
-					NSInteger j, averageWidth = (availableWidth / cellCount);
+					NSInteger averageWidth = (availableWidth / cellCount);
 
 					numberOfVisibleCells = cellCount;
 					[newWidths removeAllObjects];
 
-					for(j = 0; j < cellCount; j++) {
+					for(NSUInteger j = 0; j < cellCount; j++) {
 						CGFloat desiredWidth = [[cells objectAtIndex:j] desiredWidthOfCell];
 						[newWidths addObject:[NSNumber numberWithDouble:(desiredWidth < averageWidth && [_control sizeCellsToFit]) ? desiredWidth : averageWidth]];
 					}
@@ -323,11 +325,10 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
 							 */
 							NSInteger leftoverWidth = availableWidth - totalOccupiedWidth;
 							if(leftoverWidth > 0) {
-								NSInteger q;
-								for(q = numberOfVisibleCells - 1; q >= 0; q--) {
-									NSInteger desiredAddition = (NSInteger)leftoverWidth / (q + 1);
-									NSInteger newCellWidth = (NSInteger)[[newWidths objectAtIndex:q] doubleValue] + desiredAddition;
-									[newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithDouble:newCellWidth]];
+								for(NSUInteger q = numberOfVisibleCells; q > 0; q--) {
+									NSInteger desiredAddition = leftoverWidth / (NSInteger)q;
+									NSInteger newCellWidth = (NSInteger)[[newWidths objectAtIndex:q-1] doubleValue] + desiredAddition;
+									[newWidths replaceObjectAtIndex:q-1 withObject:[NSNumber numberWithDouble:newCellWidth]];
 									leftoverWidth -= desiredAddition;
 									totalOccupiedWidth += desiredAddition;
 								}
@@ -342,11 +343,10 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
                                                 
 						// stretch - distribute leftover room among cells, since we can't add this cell
 						NSInteger leftoverWidth = availableWidth - totalOccupiedWidth;
-						NSInteger q;
-						for(q = i - 1; q >= 0; q--) {
-							NSInteger desiredAddition = (NSInteger)leftoverWidth / (q + 1);
-							NSInteger newCellWidth = (NSInteger)[[newWidths objectAtIndex:q] doubleValue] + desiredAddition;
-							[newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithDouble:newCellWidth]];
+						for(NSUInteger q = i; q > 0; q--) {
+							NSInteger desiredAddition = leftoverWidth / (NSInteger)q;
+							NSInteger newCellWidth = (NSInteger)[[newWidths objectAtIndex:q-1] doubleValue] + desiredAddition;
+							[newWidths replaceObjectAtIndex:q-1 withObject:[NSNumber numberWithDouble:newCellWidth]];
 							leftoverWidth -= desiredAddition;
 						}
 
@@ -468,7 +468,8 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
  */
 
 - (void)_setupCells:(NSArray *)cells withWidths:(NSArray *)widths {
-	NSInteger i, tabState, cellCount = [cells count];
+	NSInteger tabState;
+	NSUInteger cellCount = [cells count];
 	NSRect cellRect = [_control genericCellRect];
 	PSMTabBarCell *cell;
 	NSTabViewItem *selectedTabViewItem = [[_control tabView] selectedTabViewItem];
@@ -476,7 +477,7 @@ static NSInteger potentialMinimumForArray(NSArray *array, NSInteger minimum){
 
 	[_overflowMenu release], _overflowMenu = nil;
 
-	for(i = 0; i < cellCount; i++) {
+	for(NSUInteger i = 0; i < cellCount; i++) {
 		cell = [cells objectAtIndex:i];
 
 		if(i < [widths count]) {
