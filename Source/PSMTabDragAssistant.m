@@ -167,7 +167,12 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 		if([tabBarControl isFlipped]) {
 			cellFrame.origin.y += cellFrame.size.height;
 		}
-		[cell setHighlighted:NO];
+
+		//clear all highlights
+		[[tabBarControl cells] enumerateObjectsUsingBlock:^(id cell, NSUInteger idx, BOOL *stop) {
+			[cell setHighlighted:NO];
+		}];
+
 		NSSize offset = NSZeroSize;
 		[pboard declareTypes:[NSArray arrayWithObjects:@"PSMTabBarControlItemPBType", nil] owner: nil];
 		[pboard setString:[[NSNumber numberWithUnsignedInteger:[[tabBarControl cells] indexOfObject:cell]] stringValue] forType:@"PSMTabBarControlItemPBType"];
@@ -194,6 +199,10 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 }
 
 - (void)draggingEnteredTabBarControl:(PSMTabBarControl *)tabBarControl atPoint:(NSPoint)mouseLoc {
+    //don't use the source tab bar if the dragged tab is the only tab in it, this leads to lost tabs
+    if (tabBarControl == _sourceTabBar && tabBarControl.numberOfVisibleTabs == 0)
+        return;
+
 	if(_currentTearOffStyle == PSMTabBarTearOffMiniwindow && ![self destinationTabBar]) {
 		[_draggedTab switchImages];
 	}
@@ -220,6 +229,9 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 }
 
 - (void)draggingUpdatedInTabBarControl:(PSMTabBarControl *)tabBarControl atPoint:(NSPoint)mouseLoc {
+    //don't use the source tab bar if the dragged tab is the only tab in it, this leads to lost tabs
+    if (tabBarControl == _sourceTabBar && tabBarControl.numberOfVisibleTabs == 0)
+        return;
 
 	if([self destinationTabBar] != tabBarControl) {
 		[self setDestinationTabBar:tabBarControl];
