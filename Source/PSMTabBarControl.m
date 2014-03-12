@@ -2003,7 +2003,7 @@ static NSMutableDictionary *registeredStyleClasses;
 			[self update];
 		} else {
 			[_controller setSelectedCell:thisCell];
-			[self setNeedsDisplay:YES];
+			[self update];
 		}
 	}
     
