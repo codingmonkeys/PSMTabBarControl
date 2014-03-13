@@ -778,7 +778,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 	// called upon first drag - must distribute placeholders
 	[self distributePlaceholdersInTabBarControl:tabBarControl];
 
-	NSArray *cells = [tabBarControl cells];
+	NSArray *cells = [[tabBarControl cells] copy];
 
 	// replace dragged cell with a placeholder, and clean up surrounding cells
 	NSUInteger cellIndex = [cells indexOfObject:cell];
@@ -789,9 +789,14 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 		[tabBarControl removeCellAtIndex:(cellIndex + 1)];
 		[tabBarControl removeCellAtIndex:(cellIndex - 1)];
 
+		// if cell was selected cell, update selection direction markers of surrounding cells
 		if((NSInteger)cellIndex - 2 >= 0) {
 			pc = [cells objectAtIndex:cellIndex - 2];
-			[pc setTabState:~[pc tabState] & PSMTab_RightIsSelectedMask];
+			[pc setTabState:[pc tabState] & (~PSMTab_RightIsSelectedMask)];
+		}
+		if((NSInteger)cellIndex + 2 < cells.count) {
+			pc = [cells objectAtIndex:cellIndex + 2];
+			[pc setTabState:[pc tabState] & (~PSMTab_LeftIsSelectedMask)];
 		}
 	}
 }

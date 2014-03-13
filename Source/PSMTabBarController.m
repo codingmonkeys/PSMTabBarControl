@@ -92,18 +92,18 @@
 	}
 
 	[nextCell setState:NSOffState];
-	[nextCell setTabState:PSMTab_PositionMiddleMask];
+	[nextCell setTabState:[nextCell tabState] & ~(PSMTab_SelectedMask)];
 
 	if(lastCell && lastCell != [_control lastVisibleTab]) {
-		[lastCell setTabState:~[lastCell tabState] & PSMTab_RightIsSelectedMask];
+		[lastCell setTabState:[lastCell tabState] & (~PSMTab_RightIsSelectedMask)];
 	}
 
 	if((nextCell = [enumerator nextObject])) {
-		[nextCell setTabState:~[lastCell tabState] & PSMTab_LeftIsSelectedMask];
+		[nextCell setTabState:[nextCell tabState] & (~PSMTab_LeftIsSelectedMask)];
 	}
 
 	[cell setState:NSOnState];
-	[cell setTabState:PSMTab_SelectedMask];
+	[cell setTabState:[cell tabState] | PSMTab_SelectedMask];
 
 	if(![cell isInOverflowMenu]) {
 		NSUInteger cellIndex = [cells indexOfObject:cell];
