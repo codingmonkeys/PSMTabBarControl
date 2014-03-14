@@ -1272,7 +1272,6 @@ static NSMutableDictionary *registeredStyleClasses;
 	NSMenu *overflowMenu = [_controller overflowMenu];
 	[_overflowPopUpButton setHidden:(overflowMenu == nil)];
 	[_overflowPopUpButton setMenu:overflowMenu];
-    [self _positionOverflowMenu];        
 
 	if(_animationTimer) {
 		[_animationTimer invalidate];
@@ -1311,6 +1310,7 @@ static NSMutableDictionary *registeredStyleClasses;
         [self updateTrackingAreas];
 		[self setNeedsDisplay:YES];
 	}
+	[self _positionOverflowMenu];
 }
 
 - (void)_animateCells:(NSTimer *)timer {
@@ -1391,6 +1391,7 @@ static NSMutableDictionary *registeredStyleClasses;
         [self updateTrackingAreas];
 	}
 
+	[self _positionOverflowMenu];
 	[self setNeedsDisplay:YES];
 }
 
