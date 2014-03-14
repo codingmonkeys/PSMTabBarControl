@@ -1972,6 +1972,20 @@ static NSMutableDictionary *registeredStyleClasses;
 #pragma mark -
 #pragma mark NSTabView Delegate
 
+- (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+	if([[self delegate] respondsToSelector:@selector(tabView:shouldSelectTabViewItem:)]) {
+		return [[self delegate] tabView:aTabView shouldSelectTabViewItem:tabViewItem];
+	} else {
+		return YES;
+	}
+}
+
+- (void)tabView:(NSTabView *)aTabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+	if([[self delegate] respondsToSelector:@selector(tabView:willSelectTabViewItem:)]) {
+		[[self delegate] performSelector:@selector(tabView:willSelectTabViewItem:) withObject:aTabView withObject:tabViewItem];
+	}
+}
+
 - (void)tabView:(NSTabView *)aTabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
 	// here's a weird one - this message is sent before the "tabViewDidChangeNumberOfTabViewItems"
 	// message, thus I can end up updating when there are no cells, if no tabs were (yet) present
@@ -2011,19 +2025,6 @@ static NSMutableDictionary *registeredStyleClasses;
 
 	if([[self delegate] respondsToSelector:@selector(tabView:didSelectTabViewItem:)]) {
 		[[self delegate] performSelector:@selector(tabView:didSelectTabViewItem:) withObject:aTabView withObject:tabViewItem];
-	}
-}
-
-- (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-	if([[self delegate] respondsToSelector:@selector(tabView:shouldSelectTabViewItem:)]) {
-		return [[self delegate] tabView:aTabView shouldSelectTabViewItem:tabViewItem];
-	} else {
-		return YES;
-	}
-}
-- (void)tabView:(NSTabView *)aTabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-	if([[self delegate] respondsToSelector:@selector(tabView:willSelectTabViewItem:)]) {
-		[[self delegate] performSelector:@selector(tabView:willSelectTabViewItem:) withObject:aTabView withObject:tabViewItem];
 	}
 }
 
