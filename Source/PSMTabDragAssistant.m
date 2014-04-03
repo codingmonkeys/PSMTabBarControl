@@ -778,7 +778,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 	// called upon first drag - must distribute placeholders
 	[self distributePlaceholdersInTabBarControl:tabBarControl];
 
-	NSArray *cells = [[tabBarControl cells] copy];
+	NSArray *cells = [[[tabBarControl cells] copy] autorelease];
 
 	// replace dragged cell with a placeholder, and clean up surrounding cells
 	NSUInteger cellIndex = [cells indexOfObject:cell];
