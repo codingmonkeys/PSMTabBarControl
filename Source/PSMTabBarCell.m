@@ -120,14 +120,14 @@
 #pragma mark -
 #pragma mark Accessors
  
-- (PSMTabBarControl *)controlView {
-    return (PSMTabBarControl *)[super controlView];
-}
-
-- (void)setControlView:(PSMTabBarControl *)newControl {
-    [super setControlView:newControl];
-}
-
+//- (PSMTabBarControl *)controlView {
+//    return (PSMTabBarControl *)[super controlView];
+//}
+//
+//- (void)setControlView:(PSMTabBarControl *)newControl {
+//    [super setControlView:newControl];
+//}
+//
 - (CGFloat)width {
 	return _frame.size.width;
 }
@@ -139,7 +139,7 @@
 - (void)setFrame:(NSRect)rect {
 	_frame = rect;
 
-    PSMTabBarControl *tabBarControl = [self controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
 
 	//move the status indicator along with the rest of the cell
 	if(![[self indicator] isHidden] && ![tabBarControl isTabBarHidden]) {
@@ -152,7 +152,7 @@
 	[super setTitle:aString];
 	_attributedStringSize = [[self attributedStringValue] size];
 	// need to redisplay now - binding observation was too quick.
-	[[self controlView] update];
+	[(PSMTabBarControl *)[self controlView] update];
 }
 
 - (NSSize)attributedStringSize {
@@ -191,7 +191,7 @@
 	if(_isInOverflowMenu != value) {
 		_isInOverflowMenu = value;
         
-        PSMTabBarControl *tabBarControl = [self controlView];
+        PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
         
 		if([[tabBarControl delegate] respondsToSelector:@selector(tabView:tabViewItem:isInOverflowMenu:)]) {
 			[[tabBarControl delegate] tabView:[tabBarControl tabView] tabViewItem:[self representedObject] isInOverflowMenu:_isInOverflowMenu];
@@ -200,7 +200,7 @@
 }
 
 - (BOOL)closeButtonOver {
-	return(_closeButtonOver && ([[self controlView] allowsBackgroundTabClosing] || ([self tabState] & PSMTab_SelectedMask) || [[NSApp currentEvent] modifierFlags] & NSCommandKeyMask));
+	return(_closeButtonOver && ([(PSMTabBarControl *)[self controlView] allowsBackgroundTabClosing] || ([self tabState] & PSMTab_SelectedMask) || [[NSApp currentEvent] modifierFlags] & NSCommandKeyMask));
 }
 
 - (void)setCloseButtonOver:(BOOL)value {
@@ -248,7 +248,7 @@
 
 - (NSImage *)closeButtonImageOfType:(PSMCloseButtonImageType)type {
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     
     if ([tabStyle respondsToSelector:@selector(closeButtonImageOfType:forTabCell:)]) {
         return [tabStyle closeButtonImageOfType:type forTabCell:self];
@@ -263,7 +263,7 @@
 #pragma mark Determining Cell Size
 
 - (NSRect)drawingRectForBounds:(NSRect)theRect {
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(drawingRectForBounds:ofTabCell:)])
         return [tabStyle drawingRectForBounds:theRect ofTabCell:self];
     else
@@ -272,7 +272,7 @@
 
 - (NSRect)titleRectForBounds:(NSRect)theRect {
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(titleRectForBounds:ofTabCell:)])
         return [tabStyle titleRectForBounds:theRect ofTabCell:self];
     else {
@@ -282,7 +282,7 @@
 
 - (NSRect)iconRectForBounds:(NSRect)theRect {
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(iconRectForBounds:ofTabCell:)]) {
         return [tabStyle iconRectForBounds:theRect ofTabCell:self];
     } else {
@@ -296,7 +296,7 @@
     if ([(PSMTabBarControl *)[self controlView] orientation] == PSMTabBarHorizontalOrientation)
         return NSZeroRect;
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(largeImageRectForBounds:ofTabCell:)]) {
         return [tabStyle largeImageRectForBounds:theRect ofTabCell:self];
     } else {
@@ -306,7 +306,7 @@
 
 - (NSRect)indicatorRectForBounds:(NSRect)theRect {
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(indicatorRectForBounds:ofTabCell:)])
         return [tabStyle indicatorRectForBounds:theRect ofTabCell:self];
     else {
@@ -329,7 +329,7 @@
 
 - (NSRect)objectCounterRectForBounds:(NSRect)theRect {
 
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(objectCounterRectForBounds:ofTabCell:)]) {
         return [tabStyle objectCounterRectForBounds:theRect ofTabCell:self];
     } else {
@@ -339,7 +339,7 @@
 
 - (NSRect)closeButtonRectForBounds:(NSRect)theRect {
     
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     
     // ask style for rect if available
     if ([tabStyle respondsToSelector:@selector(closeButtonRectForBounds:ofTabCell:)]) {
@@ -352,7 +352,7 @@
 
 - (CGFloat)minimumWidthOfCell {
 
-    id < PSMTabStyle > style = [[self controlView] style];
+    id < PSMTabStyle > style = [(PSMTabBarControl *)[self controlView] style];
     if ([style respondsToSelector:@selector(minimumWidthOfTabCell:)]) {
         return [style minimumWidthOfTabCell:self];
     } else {
@@ -362,7 +362,7 @@
 
 - (CGFloat)desiredWidthOfCell {
 
-    id < PSMTabStyle > style = [[self controlView] style];
+    id < PSMTabStyle > style = [(PSMTabBarControl *)[self controlView] style];
     if ([style respondsToSelector:@selector(desiredWidthOfTabCell:)]) {
         return [style desiredWidthOfTabCell:self];
     } else {    
@@ -581,7 +581,7 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 
 - (void)mouseEntered:(NSEvent *)theEvent {
 
-    PSMTabBarControl *tabBarControl = [self controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
     NSDictionary *userInfo = [theEvent userData];
             
     NSUInteger type = [[userInfo objectForKey:@"type"] unsignedIntegerValue];
@@ -609,7 +609,7 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 
 - (void)mouseExited:(NSEvent *)theEvent {
 
-    PSMTabBarControl *tabBarControl = [self controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
     NSDictionary *userInfo = [theEvent userData];
             
     NSUInteger type = [[userInfo objectForKey:@"type"] unsignedIntegerValue];
@@ -635,9 +635,9 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 #pragma mark Drag Support
 
 - (NSRect)draggingRect {
-    id <PSMTabStyle> tabStyle = [[self controlView] style];
+    id <PSMTabStyle> tabStyle = [(PSMTabBarControl *)[self controlView] style];
     if ([tabStyle respondsToSelector:@selector(dragRectForTabCell:ofTabBarControl:)])
-        return [tabStyle dragRectForTabCell:self ofTabBarControl:[self controlView]];
+        return [tabStyle dragRectForTabCell:self ofTabBarControl:(PSMTabBarControl *)[self controlView]];
     else
         return [self _draggingRect];
 }
@@ -646,7 +646,7 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 
 	NSRect cellFrame = [self draggingRect];
 
-    PSMTabBarControl *tabBarControl = [self controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
 
 	[tabBarControl lockFocus];
 	NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
@@ -733,10 +733,10 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 	} else if([attribute isEqualToString: NSAccessibilityTitleAttribute]) {
 		attributeValue = [self title];
 	} else if([attribute isEqualToString: NSAccessibilityHelpAttribute]) {
-		if([[[self controlView] delegate] respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
+		if([[(PSMTabBarControl *)[self controlView] delegate] respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
 			attributeValue = [NSString stringWithFormat:@"%@, %lu %@", [self title],
 							  (unsigned long)[self count],
-							  [[[self controlView] delegate] accessibilityStringForTabView:[[self controlView] tabView] objectCount:[self count]]];
+							  [[(PSMTabBarControl *)[self controlView] delegate] accessibilityStringForTabView:[(PSMTabBarControl *)[self controlView] tabView] objectCount:[self count]]];
 		} else {
 			attributeValue = [self stringValue];
 		}

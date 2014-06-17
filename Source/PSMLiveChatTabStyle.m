@@ -140,7 +140,7 @@
     if (!icon)
         return NSZeroRect;
 
-    PSMTabBarControl *tabBarControl = [cell controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[cell controlView];
     PSMTabBarOrientation orientation = [tabBarControl orientation];
     
     if ([cell hasLargeImage] && orientation == PSMTabBarVerticalOrientation)

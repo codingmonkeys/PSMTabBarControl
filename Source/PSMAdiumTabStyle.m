@@ -257,7 +257,7 @@
         return NSZeroRect;
     }
 
-    PSMTabBarControl *tabBarControl = [cell controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[cell controlView];
     PSMTabBarOrientation orientation = [tabBarControl orientation];
         
     // ask style for image
@@ -304,7 +304,7 @@
     if (!icon)
         return NSZeroRect;
 
-    PSMTabBarControl *tabBarControl = [cell controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[cell controlView];
     PSMTabBarOrientation orientation = [tabBarControl orientation];
 
     // calculate rect
@@ -348,7 +348,7 @@
     if ([attrString length] == 0)
         return NSZeroRect;
     
-    PSMTabBarControl *tabBarControl = [cell controlView];
+    PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[cell controlView];
     PSMTabBarOrientation orientation = [tabBarControl orientation];
         
     NSRect drawingRect = [cell drawingRectForBounds:theRect];
