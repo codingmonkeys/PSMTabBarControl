@@ -648,15 +648,23 @@ static inline NSSize scaleProportionally(NSSize imageSize, NSSize canvasSize, BO
 
     PSMTabBarControl *tabBarControl = (PSMTabBarControl *)[self controlView];
 
-	[tabBarControl lockFocus];
-	NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
-	[tabBarControl unlockFocus];
-	NSImage *image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
-	[image addRepresentation:rep];
-	NSImage *returnImage = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
-	[returnImage lockFocus];
-    [image drawAtPoint:NSMakePoint(0.0, 0.0) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-	[returnImage unlockFocus];
+    NSImage *returnImage = [[[NSImage alloc] initWithSize:cellFrame.size] autorelease];
+    [returnImage lockFocus];
+    CGContextRef ctx = [NSGraphicsContext currentContext].graphicsPort;
+    CGAffineTransform flipVertical = CGAffineTransformMake(1, 0, 0, -1, 0, cellFrame.size.height);
+    CGContextConcatCTM(ctx, flipVertical);
+    [tabBarControl.layer renderInContext:ctx];
+    [returnImage unlockFocus];
+    
+//    [tabBarControl lockFocus];
+//    NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
+//    [tabBarControl unlockFocus];
+//    NSImage *image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
+//    [image addRepresentation:rep];
+//    NSImage *returnImage = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
+//    [returnImage lockFocus];
+//    [image drawAtPoint:NSMakePoint(0.0, 0.0) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+//    [returnImage unlockFocus];
 	if(![[self indicator] isHidden]) {
 		NSImage *pi = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"pi"]];
 		[returnImage lockFocus];
