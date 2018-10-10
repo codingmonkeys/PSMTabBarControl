@@ -259,6 +259,10 @@ static NSMutableDictionary *registeredStyleClasses;
 	}
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:needsDisplay];
+}
+
 - (id)initWithFrame:(NSRect)frame {
 	self = [super initWithFrame:frame];
 	if(self) {
@@ -332,7 +336,7 @@ static NSMutableDictionary *registeredStyleClasses;
 
 	[center removeObserver:self name:NSWindowDidBecomeKeyNotification object:nil];
 	[center removeObserver:self name:NSWindowDidResignKeyNotification object:nil];
-	[center removeObserver:self name:NSWindowDidUpdateNotification object:nil];
+	[center removeObserver:self name:NSWindowDidResizeNotification object:nil];
 	[center removeObserver:self name:NSWindowDidMoveNotification object:nil];
 
 	if(_showHideAnimationTimer) {
@@ -343,7 +347,7 @@ static NSMutableDictionary *registeredStyleClasses;
 	if(aWindow) {
 		[center addObserver:self selector:@selector(windowStatusDidChange:) name:NSWindowDidBecomeKeyNotification object:aWindow];
 		[center addObserver:self selector:@selector(windowStatusDidChange:) name:NSWindowDidResignKeyNotification object:aWindow];
-		[center addObserver:self selector:@selector(windowDidUpdate:) name:NSWindowDidUpdateNotification object:aWindow];
+		[center addObserver:self selector:@selector(windowDidUpdate:) name:NSWindowDidResizeNotification object:aWindow];
 		[center addObserver:self selector:@selector(windowDidMove:) name:NSWindowDidMoveNotification object:aWindow];
 	}
 }
@@ -1837,6 +1841,7 @@ static NSMutableDictionary *registeredStyleClasses;
 
 - (void)tabClick:(id)sender {
 	[tabView selectTabViewItem:[sender representedObject]];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)tabNothing:(id)sender {
@@ -1889,6 +1894,10 @@ static NSMutableDictionary *registeredStyleClasses;
 
 - (void)windowDidMove:(NSNotification *)aNotification {
 	[self setNeedsDisplay:YES];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [self setNeedsDisplay:YES];
 }
 
 - (void)windowDidUpdate:(NSNotification *)notification {
@@ -2033,6 +2042,8 @@ static NSMutableDictionary *registeredStyleClasses;
 	if([[self delegate] respondsToSelector:@selector(tabView:didSelectTabViewItem:)]) {
 		[[self delegate] performSelector:@selector(tabView:didSelectTabViewItem:) withObject:aTabView withObject:tabViewItem];
 	}
+    
+    [self setNeedsDisplay:YES];
 }
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)aTabView {
